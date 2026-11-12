@@ -1,76 +1,192 @@
-# 公众号封面 Skill（wechat-cover-skill）
+<div align="center">
 
-> 🔴 **作者：袁六伟 · 台州汇芯**｜一人 AI 公司创业者，学员 7000+，客户 100+，得到/华为分享老师  
+<img src="assets/showcase/hero-banner.jpg" alt="公众号封面 Skill — 同一张照片，一键直出 6 套杂志级公众号封面" width="100%" />
+
+# 公众号封面渲染引擎 Skill
+### `wechat-cover-skill` · 6 套高客单价杂志视觉 + 黑红金 v2b + DOM 几何硬闸
+
+[![Agent Skills](https://img.shields.io/badge/Agent%20Skills-Specification-C8102E?style=flat-square)](https://agentskills.io)
+[![Engine](https://img.shields.io/badge/Engine-Headless%20Chrome%20+%20Pillow%20+%20NumPy-18181B?style=flat-square)](#五3-分钟安装与环境依赖)
+[![Themes](https://img.shields.io/badge/Themes-6%20Editorial%20+%20Classic%20Gold-B45309?style=flat-square)](#二视觉展示6-套杂志风--经典黑红金)
+[![Hard Gate](https://img.shields.io/badge/Geometry%20Gate-压脸/越界自动%20exit%202-059669?style=flat-square)](#三四条写进代码的造型与几何硬闸)
+
+> 🔴 **作者：袁六伟 · 台州汇芯**｜一人 AI 公司创业者，学员 7000+，客户 100+，得到 / 华为分享老师  
 > 📮 更多 AI 工具实测与自动化实战，关注 **公众号 / 视频号：袁六伟**
 
-黑红金公众号封面：左侧两行大字（白+金），右侧真人精修抠像。HTML 模板经 headless Chrome 渲染，2350×1000 母版导出 **900×383** 横封面和带脸的 **1:1** 方图。
+**告别「五段金色渐变 + 3D 立体投影 + 廉价电商红晕」。**  
+用确定性的 HTML + Headless Chrome 渲染管线，把一份 JSON Brief 和一张真人半身抠像，一键渲染为 **2350×1000 超清母版**，并自动裁切导出 **900×383 公众号横图 + 带完整人脸的 1:1 分享方图 + 200px 缩略图四联验收单（`cover_sheet.png`）**。
 
-## 效果展示
+```bash
+# 一键安装到 WorkBuddy / Claude Code / Codex / Cursor
+npx skills add sixwei2025/wechat-cover-skill
 
-| | |
-|:---:|:---:|
-| ![gold](assets/showcase/01-gold-menping-kehu.jpg) | ![wb](assets/showcase/02-gold-workbuddy-laowai.jpg) |
-| 金标准 · 门槛/客户 | 金标准 · WorkBuddy |
-| ![trae](assets/showcase/03-sample-trae.jpg) | |
-| 实产样张 · Trae | |
+# 一键出齐 6 套杂志风封面对比
+python3 skills/公众号封面skill/scripts/render_cover_themes.py --demo --out ./out
+```
 
-## 安装
+[6 套杂志风总览](#21-编辑设计范式封面六套2026-11-主力默认) · [经典黑红金 v2b](#22-经典黑红金-v2b-风格高冲击力工具实测向) · [DOM 几何硬闸](#三四条写进代码的造型与几何硬闸) · [六步渲染流程](#四六步封面工程流水线) · [安装与换人像](#五3-分钟安装与环境依赖)
 
+</div>
+
+---
+
+## 一、它解决什么问题？
+
+公众号封面有两个致命痛点：
+1. **用 AI 生图画封面**：中文字体笔画粘连、每次生成长相不一样、没有真人 IP 辨识度，一眼假。
+2. **用传统模板拼封面**：要么字压在人脸上，要么微信列表页自动裁成 `1:1` 方图时把标题切掉半截、把人脸切出一半。
+
+本仓库用**代码级 DOM 边界检测**彻底终结这些问题：**文字右边界越过 `1334px`（1:1 裁切安全线）、标题压入 `face_box` 人脸框、或字号低于最小可读阈值，渲染脚本直接 `exit 2` 报错拦截**，逼迫 Agent 缩短文案重渲，绝不让废片流入草稿箱。
+
+---
+
+## 二、视觉展示：6 套杂志风 + 经典黑红金
+
+### 2.1 编辑设计范式「封面六套」（2026-11 主力默认）
+
+同一篇文章、同一张真人照片，通过 `scripts/render_cover_themes.py` 一键直出 6 套高客单价杂志封面：
+
+<p align="center">
+  <img src="assets/showcase/00-cover-six.jpg" alt="封面六套总览：午夜墨、纸本墨、牛皮纸、靛蓝瓷、瑞士蓝、汇芯红" width="100%" />
+</p>
+
+| 主题 ID | 风格名称 | 底色 / 锚点色 | 真人像色彩策略 | 最佳适用题材 |
+| :--- | :--- | :--- | :--- | :--- |
+| `midnight` | **午夜墨** | `#0E0D0C` / `#D4A04A` 暖金 | 选择性压暗高光（白 T 压成中灰，保住面部肤色） | 带硬数字的复盘、搞钱算账、深夜深度长文 |
+| `paper` | **纸本墨** | `#F1EFEA` / `#0A0A0B` 纯墨 | 低饱和彩照（保留肤色血色，仅降艳度） | 方法论、核心观点、体系化长文教程 |
+| `kraft` | **牛皮纸** | `#EEDFC7` / `#9B5A2E` 焦糖 | 暖调低饱和（复古感来自纸底色，不抽干人像） | 个人经历、创业踩坑、故事复盘 |
+| `indigo` | **靛蓝瓷** | `#F1F3F5` / `#315D93` 靛蓝 | 冷调半去饱和 | AI 工具实测、产品发布、技术架构拆解 |
+| `swiss` | **瑞士蓝** | `#FAFAF8` / `#002FA7` 克莱因蓝 | 低饱和彩照 + 顶部 26px 瑞士蓝横条 | 行业报告、工具清单、横评数据表 |
+| `brand` | **汇芯红** | `#FAF7F4` / `#C7352D` 品牌红 | 原色彩照轻压暗 | 通用主力，与汇芯红正文排版完全呼应 |
+
+### 2.2 经典黑红金 v2b 风格（高冲击力工具实测向）
+
+内置 `scripts/render_cover.py` 支持左文右人黑红金高对比度封面（白/金两行大字 + 红底斜切眉标 + 题材背景帧）：
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="assets/showcase/01-gold-menping-kehu.jpg" alt="金标准：门槛与客户" width="98%" />
+      <br /><sub><b>▲ 金标准样板 1</b>：黑红金左文右人 + 右侧真人精修抠像</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="assets/showcase/02-gold-workbuddy-laowai.jpg" alt="金标准：WorkBuddy实测" width="98%" />
+      <br /><sub><b>▲ 金标准样板 2</b>：2350×1000 母版直出，200px 缩略图依然秒读</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 三、四条写进代码的造型与几何硬闸
+
+1. **真人照片绝不做纯黑白**：中文公众号语境下，把真人半身照抽成纯黑白极易产生负面联想。代码已彻底移除黑白滤镜，统一采用「保留血色的低饱和彩照 + 纸感底色」。
+2. **字号越大，字重越轻**：主标题 150px / `500` 字重，核心数字行 184px / **`400` 字重**——这是高级编辑杂志风与廉价促销横幅的分水岭。
+3. **底部必配 Issue Strip**：发丝分割线 + 作者署名 + 期号，稳住 2.35:1 超宽画幅的重心。
+4. **自动化四联 QA 验收单（`cover_sheet.png`）**：每次渲染自动输出横图、1:1 方图与 200px 手机列表缩略图同屏对照单，未过硬闸直接返回非零退出码（`exit 2`）：
+
+<p align="center">
+  <img src="assets/showcase/11-cover-qa-sheet.png" alt="cover_sheet.png 四联缩略图与1:1方图自动验收单" width="94%" />
+</p>
+
+---
+
+## 四、六步封面工程流水线
+
+<p align="center">
+  <img src="assets/showcase/pipeline-architecture.jpg" alt="公众号封面六步渲染与硬闸架构图" width="100%" />
+</p>
+
+### 快速命令速查
+
+```bash
+# 1. 使用封面六套渲染单篇（推荐默认）
+python3 skills/公众号封面skill/scripts/render_cover_themes.py   --brief cover-brief.json --theme midnight --out ./build/cover
+
+# 2. 一次渲染全部 6 套主题，对比挑选最合身的一张
+python3 skills/公众号封面skill/scripts/render_cover_themes.py   --brief cover-brief.json --demo --out ./build/cover-all
+
+# 3. 使用经典黑红金 v2b 渲染器
+python3 skills/公众号封面skill/scripts/render_cover.py   skills/公众号封面skill/templates/example-brief-xiaowangzi.json --out ./build/cover
+```
+
+---
+
+## 五、3 分钟安装与环境依赖
+
+### 1. 安装 Skill
 ```bash
 npx skills add sixwei2025/wechat-cover-skill
 ```
 
-也可把 `skills/公众号封面skill/` 整个文件夹拷进 agent 的 skills 目录（Claude Code / Codex / Cursor / WorkBuddy 等支持 `SKILL.md` 即可）。
+### 2. 环境依赖
+- **Python 3.9+**：`pip3 install pillow numpy scipy pyyaml`
+- **Google Chrome / Chromium**：用于无头 DOM 测量与超清截图（可通过环境变量 `CHROME_BIN` 指定路径）
+- **字体**：思源黑体 Heavy / `NotoSansCJKsc-Black.otf`（放到 `skills/公众号封面skill/assets/fonts/` 或安装至系统字体库）
 
-## 依赖
-
-- Python 3：`Pillow` `numpy` `scipy` `PyYAML`
-- Chrome / Chromium（或环境变量 `CHROME_BIN`）
-- 字体：Noto Sans CJK SC Black / 思源黑体 Heavy → 放到 skill 内 `assets/fonts/NotoSansCJKsc-Black.otf`
-
-## 快速开始
-
-对 agent 说：
-
-> 用「公众号封面skill」，按默认黑红金风格出封面：眉标……，两行标题……，副标题……，角标……，背景用这张图。
-
-或本地：
-
+### 3. 换成你自己的真人抠像（只需做一次）
 ```bash
-cp skills/公众号封面skill/templates/example-brief-xiaowangzi.json ./cover_brief.json
-# 编辑内容字段后：
-python3 skills/公众号封面skill/scripts/render_cover.py ./cover_brief.json --out ./build/cover
+python3 skills/公众号封面skill/scripts/make_cutout_hd.py   --src your_photo.jpg --box 0,0,1200,1500 --face 420,180,780,620
 ```
-
-## 目录
-
-```
-README.md
-LICENSE
-assets/showcase/                 # 预览图
-skills/公众号封面skill/
-  SKILL.md
-  rules.yaml                     # 封面数字上限
-  references/cover-style-spec.md
-  assets/                        # 抠像 + 示例背景帧
-  templates/
-  scripts/
-```
-
-## 硬规则摘要
-
-- 对外封面**必须**右侧真人 IP 露出（禁止藏人像）
-- 标题固定两行；主色只黑红金白
-- 本仓库**不含**微信 AppSecret / 群发脚本；封面只做素材
-
-## 许可
-
-MIT。人像与品牌素材版权归袁六伟 / 台州汇芯；第三方商标归各自权利人。
+替换 `assets/owner_cutout_hd.png` 与坐标 JSON 后，所有压脸检测与 1:1 居中裁切会自动适配你的脸部位置。
 
 ---
 
-## 关于作者
+## 六、仓库目录结构
 
-**袁六伟 · 台州汇芯**：一人 AI 公司创业者。公众号 / 视频号：**袁六伟**。
+```text
+wechat-cover-skill/
+├── README.md                                  # 仓库总览与视觉展示
+├── LICENSE                                    # MIT 开源许可
+├── assets/showcase/                           # 封面六套、黑红金样张、QA 验收单与架构图
+└── skills/公众号封面skill/
+    ├── SKILL.md                               # 【总控入口】封面六套、flat 纯黑与黑红金完整规范
+    ├── rules.yaml                             # 标题字数、字号下限与几何裁切硬阈值配置
+    ├── references/
+    │   ├── 封面六套.md                        # 6 套杂志视觉配色 Token、四条硬规则与避坑记录
+    │   └── cover-style-spec.md                # 黑红金 v2b 视觉规范说明
+    ├── assets/
+    │   ├── owner_cutout_hd.png                # 默认真人高清抠像资产（含脸部保护框坐标）
+    │   └── default-bg-frame.jpg               # 示例题材背景帧
+    ├── templates/
+    │   ├── cover.html                         # 2350×1000 响应式排版与 DOM 测量模板
+    │   ├── default-brief.json                 # 默认风格参数基线
+    │   └── example-brief-xiaowangzi.json      # 完整 Brief 示例
+    └── scripts/
+        ├── render_cover_themes.py             # ★ 封面六套编辑风渲染引擎（主力）
+        ├── render_cover.py                    # 黑红金 v2b 与 flat 模式渲染引擎
+        ├── chrome_shot.py                     # Headless Chrome 截图与 DOM 几何边界提取器
+        ├── make_cutout_hd.py                  # 真人半身照高清抠像与边缘羽化工具
+        └── compare_refs.py                    # 新封面与标杆封面并排对照生成工具
+```
 
-这个 Skill 免费开源。有用的话欢迎 ⭐ Star，再关注「袁六伟」看更多实战。
+---
+
+## 关于作者与开源生态
+
+**袁六伟 · 台州汇芯**：一人 AI 公司创业者，学员 7000+，服务商单客户 100+，覆盖近 20 个行业，得到 / 华为分享老师。AI 变现实战派，自己跑通才拿出来教。
+
+- 公众号：**袁六伟**（微信搜一搜关注，看更多 AI 工具实测与一人公司实战）
+- 视频号：**袁六伟**
+
+这个项目免费开源。如果它帮你的产线省下了每天反复返工的时间，欢迎在右上角点个 ⭐ **Star**，也欢迎转发给身边做内容或一人公司的朋友。
+
+### 同系列开源 Skill 矩阵（袁六伟 · 台州汇芯）
+
+| 仓库 | 领域 | 核心能力 |
+| :--- | :--- | :--- |
+| [**workbuddy-wechat-autopilot**](https://github.com/sixwei2025/workbuddy-wechat-autopilot) | 公众号全链路 | 九步硬闸总控：选题→写稿→真实截图→6套封面→6套排版→三重校验→草稿箱 |
+| [**wechat-cover-skill**](https://github.com/sixwei2025/wechat-cover-skill) | 公众号视觉 | 封面渲染引擎（6套高客单价杂志风 + 黑红金 v2b + DOM 几何硬闸） |
+| [**gzh-million-layout-skill**](https://github.com/sixwei2025/gzh-million-layout-skill) | 公众号排版 | 汇芯红 `#C8102E` 六套 100% 内联 CSS 骨架 + 乱码硬闸 + 配图皮肤 |
+| [**ai-tool-review-wechat-skill**](https://github.com/sixwei2025/ai-tool-review-wechat-skill) | 公众号评测 | AI 工具真跑评测工作流（5项一票否决 + 说人话硬闸 + 证据表） |
+| [**hit-title-expert-skill**](https://github.com/sixwei2025/hit-title-expert-skill) | 爆款标题 | 一次直出 10 条 14–22 字高浓缩狠标题（5大公式 × 5类钩子词） |
+| [**auto-tutorial-skill**](https://github.com/sixwei2025/auto-tutorial-skill) | 短视频工程 | 链接/网页/真机截图 → 3:4 封面 + 1.5x 配音 + 红框标注教程视频 |
+| [**talking-head-video-skill**](https://github.com/sixwei2025/talking-head-video-skill) | 短视频工程 | 1080×1920 竖屏真人口播短视频（ASR 错字校对 + 逐字卡拉OK字幕 + 6项QC） |
+| [**3d-map-video-skill**](https://github.com/sixwei2025/3d-map-video-skill) | 短视频工程 | MapLibre 3D 地形 + WarFX 战争特效（粒子行军/点阵兵力/震屏混音） |
+| [**psych-kepu-video-skill**](https://github.com/sixwei2025/psych-kepu-video-skill) | 短视频工程 | Remotion + JSON 驱动的 15–30s 深色扁平动画心理科普短视频 |
+| [**dark-infographic-video-skill**](https://github.com/sixwei2025/dark-infographic-video-skill) | 短视频工程 | 纯 Python + FFmpeg 暗黑流光数据可视化科普片（含 v2 手机外放配乐） |
+| [**local-video-hub**](https://github.com/sixwei2025/local-video-hub) | AI 团队基建 | 视频版本地 Obsidian：多 AI 员工统一交片、去重门闸与四态流转云台 |
+| [**yuanliuwei-ai-skills**](https://github.com/sixwei2025/yuanliuwei-ai-skills) | 一人公司方法 | PACT 72h 需求验证模型与一人 AI 公司 10 大业务决策模块 |
+| [**book-skill**](https://github.com/sixwei2025/book-skill) | 知识工程 | 上传任意书籍 PDF → 自动提炼方法论生成 `.skill` + 公众号导流文案 |
+| [**huangdi-skill**](https://github.com/sixwei2025/huangdi-skill) | 认知操作系统 | 中国历史八大皇帝（秦始皇/汉武帝/唐太宗等）一手史料认知框架蒸馏 |
+| [**sunrise-tracker**](https://github.com/sixwei2025/sunrise-tracker) | 选题雷达 | 小红书 AI 赛道 10 倍异常流量「低粉爆文」每日早 7 点监测推送 |

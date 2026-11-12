@@ -23,7 +23,7 @@ cover_200.png, cover_360.png, cover_sheet.png, cover.meta.json (pic_crop_235_1 /
 Exit 2 on QA failure.
 """
 from __future__ import annotations
-import argparse, hashlib, html, json, random, re, sys
+import argparse, hashlib, html, json, os, random, re, sys
 from pathlib import Path
 from PIL import Image
 
@@ -41,12 +41,30 @@ TEXT_X = 110
 def vis_len(s: str) -> float:
     return sum(0.58 if (c.isascii() and c not in " ") else (0.3 if c == " " else 1.0) for c in s)
 
-def font_url() -> str:
-    for p in [Path.home() / ".fonts/NotoSansCJKsc-Black.otf", Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Black.ttc"),
-              ROOT / "assets/fonts/NotoSansCJKsc-Black.otf"]:
+FONT_CANDIDATES = [
+    Path.home() / ".fonts/NotoSansCJKsc-Black.otf",
+    Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Black.ttc"),
+    ROOT / "assets/fonts/NotoSansCJKsc-Black.otf",
+    ROOT / "assets/fonts/NotoSansSC-Black.otf",
+    # 本机回退：没装思源黑体时用系统自带的中文粗黑（macOS）
+    Path("/System/Library/Fonts/Hiragino Sans GB.ttc"),
+    Path("/System/Library/Fonts/STHeiti Medium.ttc"),
+    Path("/System/Library/Fonts/PingFang.ttc"),
+]
+
+def font_path() -> Path | None:
+    """返回可用的粗黑中文字体文件；COVER_FONT 环境变量优先。"""
+    env = os.environ.get("COVER_FONT")
+    if env and Path(env).expanduser().exists():
+        return Path(env).expanduser().resolve()
+    for p in FONT_CANDIDATES:
         if p.exists():
-            return p.resolve().as_uri()
-    return ""
+            return p.resolve()
+    return None
+
+def font_url() -> str:
+    p = font_path()
+    return p.as_uri() if p else ""
 
 def rim_lit(cut: Image.Image, out_png: Path, strength: float = 0.14, width: int = 4, color=(255, 110, 90)) -> Path:
     """自然轮廓光：只在人像 alpha 边缘向内约 4px 的带状区域，用 screen 方式提亮成暖红色。
@@ -71,6 +89,21 @@ def rim_lit(cut: Image.Image, out_png: Path, strength: float = 0.14, width: int 
     a[..., :3] = rgb * (1 - k) + screen * k
     Image.fromarray((a * 255).clip(0, 255).astype("uint8"), "RGBA").save(out_png)
     return out_png
+
+def fade_bottom(png: Path, p_top: int, scale: float, y0: float, y1: float, power: float = 1.15) -> Path:
+    """按【画布坐标】给人像 alpha 做底部渐隐。
+    CSS mask 的百分比相对 <img> 自身高度，而人像通常比画布高（底部出血），
+    直接用百分比会把渐隐线落到画布外面，底部变成一条硬切线。这里用像素坐标算，不会错。
+    y0 = 开始变透明的画布 y；y1 = 完全消失的画布 y。"""
+    import numpy as np
+    im = Image.open(png).convert("RGBA")
+    a = np.asarray(im).astype(np.float32)
+    h = a.shape[0]
+    canvas_y = p_top + np.arange(h, dtype=np.float32) * scale
+    k = np.clip(1.0 - (canvas_y - y0) / max(1.0, y1 - y0), 0.0, 1.0) ** power
+    a[..., 3] *= k[:, None]
+    Image.fromarray(a.clip(0, 255).astype("uint8"), "RGBA").save(png)
+    return png
 
 def fx(seed: str) -> str:
     rnd = random.Random(int(hashlib.md5(seed.encode()).hexdigest()[:8], 16))
@@ -98,6 +131,8 @@ def main():
     if b.get("use_default", True) and dp.exists():
         layout0 = b.get("layout", "classic")
         req = ["kicker", "title_lines", "subtitle", "square_badge", "background"]
+        if b.get("bg_optional"):          # 纯色底封面（瑞士风）：不铺插画背景，只用模板自带暗底
+            req.remove("background")
         if layout0 != "fullbleed":
             req.append("bg_subject_x")
         missing = [k for k in req if b.get(k) in (None, "", [])]
@@ -113,7 +148,7 @@ def main():
     style = b.get("style", "classic")
     if style not in ("classic", "punch"): errs.append("style 只能是 classic / punch")
     lines = [l.strip() for l in b.get("title_lines", []) if l.strip()]
-    if len(lines) != 2: errs.append("标题必须正好 2 行（参考封面全部是两行：白色陈述 + 金色结论）")
+    if not (2 <= len(lines) <= 3): errs.append("标题 2–3 行（默认两行：白色陈述 + 金色结论；三行用于「品牌名 / 主标题 / 数字结论」这种层级）")
     if any(vis_len(l) > r["title_max_vis_per_line"] for l in lines): errs.append(f"单行视觉长度 > {r['title_max_vis_per_line']}（汉字=1，数字/字母≈0.6）")
     if sum(len(l.replace(' ', '')) for l in lines) > r["title_max_chars_total"]: errs.append(f"标题总字数 > {r['title_max_chars_total']}")
     kicker = (b.get("kicker") or "").strip(); sub = (b.get("subtitle") or "").strip()
@@ -123,7 +158,7 @@ def main():
     if cards and style != "punch": errs.append("图标卡只用于 punch 风格")
     if len(cards) > 4 or any(len(c) != 2 or len(c[1]) > 5 for c in cards): errs.append("cards 最多 4 张，每张 [图标字, ≤5 字]")
     gold = int(b.get("gold_line", 2))
-    if gold not in (1, 2): errs.append("gold_line 只能是 1 或 2")
+    if gold not in (1, 2, 3): errs.append("gold_line 只能是 1–3（三行封面用 3）")
     if errs: print(json.dumps({"ok": False, "errors": errs}, ensure_ascii=False)); sys.exit(2)
 
     # 硬规则（六伟 2026-10-28）：对外封面必须真人 IP 露出；禁止 portrait:false 藏人像
@@ -165,20 +200,38 @@ def main():
     tw = 1000 if cards else 1240
     lens = [vis_len(l) for l in lines]
     ls = 6
-    title_px = int(min(int(b.get("title_max_px", 205)), min((tw - ls * len(l)) / vl for l, vl in zip(lines, lens))))
-    if style == "punch": title_px = int(title_px * 0.97)
-    if title_px < r["title_min_height_ratio"] * H: errs.append(f"标题字号 {title_px}px < {int(r['title_min_height_ratio']*H)}px，请缩短")
+    cap_px = int(b.get("title_max_px", 240 if b.get("flat") else 205))
+    base_px = int(min(cap_px, min((tw - ls * len(l)) / vl for l, vl in zip(lines, lens))))
+    if style == "punch": base_px = int(base_px * 0.97)
+    want = b.get("title_px_lines") or []          # 可选：逐行字号，如 [150, 195, 235]
+    title_pxs = []
+    for i, (l, vl) in enumerate(zip(lines, lens)):
+        w_ = int(want[i]) if i < len(want) and want[i] else base_px
+        title_pxs.append(int(min(w_, (tw - ls * len(l)) / vl)))   # 逐行再按可用宽度收一次，防溢出
+    title_px = max(title_pxs)
+    if sum(px * 1.12 for px in title_pxs) > H * 0.62:
+        warns.append(f"标题 {len(lines)} 行总高超过画布 62%（约 {int(sum(px * 1.12 for px in title_pxs))}px），可能挤压副标题")
+    if min(title_pxs) < r["title_min_height_ratio"] * H: errs.append(f"标题最小字号 {min(title_pxs)}px < {int(r['title_min_height_ratio']*H)}px，请缩短")
 
+    tcls = b.get("title_classes") or []      # 逐行附加 class：lat=拉丁细体、dim=灰色、留空=默认
+    flat = bool(b.get("flat"))
     def tl(i, l):
         cls = "g" if i + 1 == gold else "w"
-        return f'<div class="t {cls}" style="font-size:{title_px}px"><span>{html.escape(l)}</span></div>'
+        extra = (" " + tcls[i]) if i < len(tcls) and tcls[i] else ""
+        return f'<div class="t {cls}{extra}" style="font-size:{title_pxs[i]}px"><span>{html.escape(l)}</span></div>'
     title_html = "".join(tl(i, l) for i, l in enumerate(lines))
     if not kicker: kicker_html = ""
     elif style == "classic" and b.get("kicker_tag"): kicker_html = f'<div class="ktag" id="kick" style="background:linear-gradient(180deg,{pal.get("tag_top", "#E3262F")},{pal.get("tag_bottom", "#A30B16")})"><span>{html.escape(kicker)}</span></div>'  # 2026-10-17 红底标签条
-    elif style == "classic": kicker_html = f'<div class="kicker" id="kick" style="margin-left:{int(title_px*0.9)}px"><i></i><span>{html.escape(kicker)}</span><i></i></div>'
+    elif style == "classic":
+        kcls = "kicker" if b.get("kicker_rule", True) else "kicker kr-off"
+        lead = '<i class="sq"></i>' if b.get("flat") else "<i></i>"
+        tail = "" if b.get("flat") else "<i></i>"
+        kicker_html = f'<div class="{kcls}" id="kick" style="margin-left:{int(b.get("kicker_offset", title_px*0.9))}px">{lead}<span>{html.escape(kicker)}</span>{tail}</div>'
     else: kicker_html = f'<div class="ktag" id="kick"><span>{html.escape(kicker)}</span></div>'
     if not sub: sub_html = ""
-    elif style == "classic": sub_html = f'<div class="rule"></div><div class="sub" id="sub"><b></b><span>{html.escape(sub)}</span></div>'
+    elif style == "classic":
+        scls = "sub" if b.get("sub_mark", True) else "sub plain"
+        sub_html = f'<div class="rule"></div><div class="{scls}" id="sub"><b></b><span>{html.escape(sub)}</span></div>'
     else: sub_html = f'<div class="stag" id="sub"><span>{html.escape(sub)}</span></div>'
     cards_html = "".join(f'<div class="card" style="left:1130px;top:{200 + i*150 + (0 if len(cards) > 3 else 60)}px"><div class="ic">{html.escape(c[0])}</div><div class="lb">{html.escape(c[1])}</div></div>' for i, c in enumerate(cards))
     prop = b.get("prop")
@@ -232,21 +285,55 @@ def main():
     text_shade_mid = round(text_shade * 0.55, 3)
     css_blur = float(b.get("bg_blur_css", 0 if not fullbleed else max(0.0, float(b.get("bg_blur", 8)) * 0.4)))
     bg_op = float(b.get("bg_opacity", 1.0 if fullbleed else 0.55))
+    # 人像底部渐隐：mask 的百分比是相对 <img> 自身高度，而人像通常比画布高，
+    # 直接用 % 会把渐隐线落到画布外面 → 底部变成硬切。这里统一换算成 img 内像素坐标。
+    fa = float(b.get("fade_start", 0.56)) * H      # 画布坐标：从这里开始渐隐
+    fb_ = float(b.get("fade_mid", 0.80)) * H       # 到 90% 不透明
+    fc = float(b.get("fade_end", 1.0)) * H         # 到这里完全消失
+    def _iy(y): return max(0, round(y - p_top))
+    do_fade = bool(b.get("fade_start")) and (b.get("flat") or b.get("portrait_fade"))
+    mask_css = "none" if do_fade else (f"linear-gradient(180deg,#000 0px,#000 {_iy(fa)}px,rgba(0,0,0,.90) {_iy(fb_)}px,"
+                f"rgba(0,0,0,.45) {_iy((fb_+fc)/2)}px,rgba(0,0,0,0) {_iy(fc)}px)")
     lit = rim_lit(cut, out / "portrait_lit.png", strength=float(b.get("rim_strength", 0.14)))
+    if do_fade:
+        lit = fade_bottom(lit, p_top, s, fa, fc, float(b.get("fade_power", 1.15)))
     portrait_html = f'<img class="portrait" id="portrait" src="{lit.resolve().as_uri()}">'
     glow_x = str(FACE_CX - 20)
-    if fullbleed:
-        # 整图背景为主：不铺地面网格/斜光线，避免和照片抢戏；人像仍有 rim + drop-shadow
+    if fullbleed or b.get("fx") is False:
+        # 瑞士风：去 arc/斜光线/火星粒子/地面网格，画面只留标题、人像、一条发丝线
         fx_html = ""
         floor_html = ""
     else:
         fx_html = fx("".join(lines))
         floor_html = '<div class="floor"></div>'
-    rep = {"{{prop_html}}": prop_html, "{{prop_left}}": "1165", "{{prop_top}}": "560", "{{style}}": style, "{{layout}}": layout,
+    def g_(k, d): return b.get(k, d)
+    rep = {"{{flat_cls}}": "flat" if b.get("flat") else "",
+           "{{flat_bg}}": g_("flat_bg", "#0B0B0C"),
+           "{{gold_solid}}": g_("gold_solid", "#F0A63C"),
+           "{{mid_color}}": g_("mid_color", "#B9B9B9"),
+           "{{ls_set}}": str(g_("title_ls_set", 0)),
+           "{{lat_weight}}": str(g_("lat_weight", 300)),
+           "{{lat_ls}}": str(g_("lat_ls", 8)),
+           "{{port_sat}}": str(g_("port_saturate", 0.82)),
+           "{{port_bright}}": str(g_("port_brightness", 0.94)),
+           "{{port_contrast}}": str(g_("port_contrast", 1.02)),
+           "{{mask_css}}": mask_css,
+           "{{rule_color}}": g_("rule_color", "rgba(255,255,255,.14)"),
+           "{{accent_fade}}": g_("accent_fade", "rgba(200,16,46,.28)"),
+           "{{rule_mt}}": str(g_("rule_mt", 44)),
+           "{{rule_mb}}": str(g_("rule_mb", 26)),
+           "{{sub_color}}": g_("sub_color", "#7E7E7E"),
+           "{{sub_ls}}": str(g_("sub_ls", 3)),
+           "{{kicker_color}}": g_("kicker_color", "#7E7E7E"),
+           "{{kick_ls}}": str(g_("kick_ls", 6)),
+           "{{kick_sq}}": str(g_("kick_sq", 14)),
+           "{{kick_sq_gap}}": str(g_("kick_sq_gap", 20)),
+           "{{accent}}": g_("accent", "#C8102E"),
+           "{{prop_html}}": prop_html, "{{prop_left}}": "1165", "{{prop_top}}": "560", "{{style}}": style, "{{layout}}": layout,
            "{{glow_x}}": glow_x, "{{p_left}}": str(p_left), "{{p_top}}": str(p_top), "{{p_height}}": str(p_h),
            "{{portrait_html}}": portrait_html, "{{floor_html}}": floor_html,
-           "{{font_black}}": font_url(), "{{tx}}": str(TEXT_X), "{{tw}}": str(tw + 120),
-           "{{title_ls}}": str(ls), "{{kicker_px}}": str(b.get("kicker_px", 50 if style == "classic" else 60)), "{{sub_px}}": str(b.get("sub_px", 52 if style == "classic" else 56)),
+           "{{font_black}}": font_url(), "{{tx}}": str(int(b.get("text_x", TEXT_X))), "{{tw}}": str(tw + 120),
+           "{{title_ls}}": str(ls), "{{title_lh}}": str(b.get("title_lh", 1.12)), "{{kicker_px}}": str(b.get("kicker_px", 50 if style == "classic" else 60)), "{{sub_px}}": str(b.get("sub_px", 52 if style == "classic" else 56)),
            "{{rule_w}}": "860", "{{title_html}}": title_html, "{{kicker_html}}": kicker_html, "{{sub_html}}": sub_html,
            "{{cards_html}}": cards_html, "{{fx_html}}": fx_html,
            "{{text_shade}}": f"{text_shade:.3f}", "{{text_shade_mid}}": f"{text_shade_mid:.3f}",
@@ -260,14 +347,15 @@ def main():
     m = re.search(r"QA=(\{.*?\})</pre>", dom, re.S)
     qa = json.loads(html.unescape(m.group(1))) if m else {}
     if not qa: errs.append("QA 脚本未返回结果")
-    if qa.get("fonts") != "black": warns.append("未加载 Noto Sans CJK SC Black，字重可能不够；安装思源黑体 Heavy 或设置字体路径")
-    def inter(a1, b1): return not (a1[2] <= b1[0] or b1[2] <= a1[0] or a1[3] <= b1[1] or b1[3] <= a1[1])
+    if qa.get("fonts") != "black": warns.append(f"未加载超粗黑体（当前字体 {font_path() or '无'}），字重可能不够；装思源黑体 Heavy 或设 COVER_FONT 指向字体文件")
+    def inter(a1, b1, tol=4): return not (a1[2] <= b1[0] + tol or b1[2] <= a1[0] + tol or a1[3] <= b1[1] + tol or b1[3] <= a1[1] + tol)   # tol：相邻行矩形边界相接 1px 不算压
     boxes = [("title", (t["x"], t["y"], t["x"] + t["w"], t["y"] + t["h"])) for t in qa.get("titles", [])]
     for k in ("kicker", "sub"):
         if qa.get(k): v = qa[k]; boxes.append((k, (v["x"], v["y"], v["x"] + v["w"], v["y"] + v["h"])))
     # classic / fullbleed 同级：压脸、出血、文字不进肩线、1:1 含完整脸
     shoulder_x = p_left + 0.10 * p_w
     for name, bx in boxes:
+        if bx[2] > SQUARE_X - 14: errs.append(f"{name} 伸进 1:1 裁切区（右边界 {bx[2]} > {SQUARE_X - 14}），手机小图会被切字")
         if bx[2] > shoulder_x: errs.append(f"{name} 伸进人像（右边界 {bx[2]} > {round(shoulder_x)}）")
         if bx[0] < 70 or bx[1] < 40 or bx[3] > H - 40: errs.append(f"{name} 超出安全边距 {bx}")
         if inter(bx, face): errs.append(f"{name} 压到人脸")
@@ -295,8 +383,13 @@ def main():
     if badge:
         if len(badge) > 8: errs.append("square_badge > 8 字")
         from PIL import ImageDraw, ImageFont
-        fp = font_url().replace("file://", "")
-        bs = b.get("badge_style", {}); fnt = ImageFont.truetype(fp, int(bs.get("font_px", 64))) if fp else ImageFont.load_default()
+        _fpath = font_path()
+        bs = b.get("badge_style", {})
+        try:
+            fnt = ImageFont.truetype(str(_fpath), int(bs.get("font_px", 64))) if _fpath else ImageFont.load_default()
+        except OSError:
+            errs.append(f"角标字体无法加载（{_fpath}），中文角标会变成方块")
+            fnt = ImageFont.load_default()
         d = ImageDraw.Draw(im); bx = d.textbbox((0, 0), badge, font=fnt)
         # 1:1 区固定右侧带脸裁切；角标画在 SQUARE_X 左上
         badge_base_x = SQUARE_X
