@@ -69,7 +69,7 @@ https://github.com/sixwei2025/wechat-cover-skill
 同一篇文章、同一张真人照片，通过 `scripts/render_cover_themes.py` 一键直出 6 套高客单价杂志封面：
 
 <p align="center">
-  <img src="assets/showcase/00-cover-six.jpg" alt="封面六套总览：午夜墨、纸本墨、牛皮纸、靛蓝瓷、瑞士蓝、汇芯红" width="100%" />
+  <img src="assets/showcase/00-cover-layouts-v3.jpg" alt="封面六套总览：午夜墨、纸本墨、牛皮纸、靛蓝瓷、瑞士蓝、汇芯红" width="100%" />
 </p>
 
 | 主题 ID | 风格名称 | 默认版式（`--layout`） | 底色 / 锚点色 | 最佳适用题材 |
