@@ -3,12 +3,12 @@
 <img src="assets/showcase/hero-banner.jpg" alt="公众号封面 Skill — 同一张照片，一键直出 6 套杂志级公众号封面" width="100%" />
 
 # 公众号封面渲染引擎 Skill
-### `wechat-cover-skill` · 6 套高客单价杂志视觉 + 黑红金 v2b + DOM 几何硬闸
+### `wechat-cover-skill` · 6 套高客单价杂志视觉 + 黑红金 v2b + 防压脸自动校验
 
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-Specification-C8102E?style=flat-square)](https://agentskills.io)
 [![Engine](https://img.shields.io/badge/Engine-Headless%20Chrome%20+%20Pillow%20+%20NumPy-18181B?style=flat-square)](#五3-分钟安装与环境依赖)
 [![Themes](https://img.shields.io/badge/Themes-6%20Editorial%20+%20Classic%20Gold-B45309?style=flat-square)](#二视觉展示6-套杂志风--经典黑红金)
-[![Hard Gate](https://img.shields.io/badge/Geometry%20Gate-压脸/越界自动%20exit%202-059669?style=flat-square)](#三四条写进代码的造型与几何硬闸)
+[![Layout Check](https://img.shields.io/badge/Layout%20Check-压脸/越界自动%20exit%202-059669?style=flat-square)](#三四条写进代码的造型与版面防遮挡标准)
 
 > 🔴 **作者：袁六伟 · 台州汇芯**｜一人 AI 公司创业者，学员 7000+，客户 100+，得到 / 华为分享老师  
 > 📮 更多 AI 工具实测与自动化实战，关注 **公众号 / 视频号：袁六伟**
@@ -24,7 +24,7 @@ npx skills add sixwei2025/wechat-cover-skill
 python3 skills/公众号封面skill/scripts/render_cover_themes.py --demo --out ./out
 ```
 
-[6 套杂志风总览](#21-编辑设计范式封面六套2026-11-主力默认) · [经典黑红金 v2b](#22-经典黑红金-v2b-风格高冲击力工具实测向) · [DOM 几何硬闸](#三四条写进代码的造型与几何硬闸) · [六步渲染流程](#四六步封面工程流水线) · [安装与换人像](#五3-分钟安装与环境依赖)
+[6 套杂志风总览](#21-编辑设计范式封面六套2026-11-主力默认) · [经典黑红金 v2b](#22-经典黑红金-v2b-风格高冲击力工具实测向) · [防压脸自动校验](#三四条写进代码的造型与版面防遮挡标准) · [六步渲染流程](#四六步封面工程流水线) · [安装与换人像](#五3-分钟安装与环境依赖)
 
 </div>
 
@@ -78,12 +78,12 @@ python3 skills/公众号封面skill/scripts/render_cover_themes.py --demo --out 
 
 ---
 
-## 三、四条写进代码的造型与几何硬闸
+## 三、四条写进代码的造型与版面防遮挡标准
 
 1. **真人照片绝不做纯黑白**：中文公众号语境下，把真人半身照抽成纯黑白极易产生负面联想。代码已彻底移除黑白滤镜，统一采用「保留血色的低饱和彩照 + 纸感底色」。
 2. **字号越大，字重越轻**：主标题 150px / `500` 字重，核心数字行 184px / **`400` 字重**——这是高级编辑杂志风与廉价促销横幅的分水岭。
 3. **底部必配 Issue Strip**：发丝分割线 + 作者署名 + 期号，稳住 2.35:1 超宽画幅的重心。
-4. **自动化四联 QA 验收单（`cover_sheet.png`）**：每次渲染自动输出横图、1:1 方图与 200px 手机列表缩略图同屏对照单，未过硬闸直接返回非零退出码（`exit 2`）：
+4. **自动化四联验收单（`cover_sheet.png`）**：每次渲染自动输出横图、1:1 方图与 200px 手机列表缩略图同屏对照单，一旦检测到文字压脸或越界，直接返回非零退出码（`exit 2`）：
 
 <p align="center">
   <img src="assets/showcase/11-cover-qa-sheet.png" alt="cover_sheet.png 四联缩略图与1:1方图自动验收单" width="94%" />
@@ -94,7 +94,7 @@ python3 skills/公众号封面skill/scripts/render_cover_themes.py --demo --out 
 ## 四、六步封面工程流水线
 
 <p align="center">
-  <img src="assets/showcase/pipeline-architecture.jpg" alt="公众号封面六步渲染与硬闸架构图" width="100%" />
+  <img src="assets/showcase/pipeline-architecture.jpg" alt="公众号封面六步渲染与质检架构图" width="100%" />
 </p>
 
 ### 快速命令速查
@@ -175,17 +175,17 @@ wechat-cover-skill/
 
 | 仓库 | 领域 | 核心能力 |
 | :--- | :--- | :--- |
-| [**workbuddy-wechat-autopilot**](https://github.com/sixwei2025/workbuddy-wechat-autopilot) | 公众号全链路 | 九步硬闸总控：选题→写稿→真实截图→6套封面→6套排版→三重校验→草稿箱 |
-| [**wechat-cover-skill**](https://github.com/sixwei2025/wechat-cover-skill) | 公众号视觉 | 封面渲染引擎（6套高客单价杂志风 + 黑红金 v2b + DOM 几何硬闸） |
-| [**gzh-million-layout-skill**](https://github.com/sixwei2025/gzh-million-layout-skill) | 公众号排版 | 汇芯红 `#C8102E` 六套 100% 内联 CSS 骨架 + 乱码硬闸 + 配图皮肤 |
-| [**ai-tool-review-wechat-skill**](https://github.com/sixwei2025/ai-tool-review-wechat-skill) | 公众号评测 | AI 工具真跑评测工作流（5项一票否决 + 说人话硬闸 + 证据表） |
+| [**workbuddy-wechat-autopilot**](https://github.com/sixwei2025/workbuddy-wechat-autopilot) | 公众号全链路 | 九步全自动总控：选题→写稿→真实截图→6套封面→6套排版→三重自动质检→草稿箱 |
+| [**wechat-cover-skill**](https://github.com/sixwei2025/wechat-cover-skill) | 公众号视觉 | 封面渲染引擎（6套高客单价杂志风 + 黑红金 v2b + 防压脸自动校验） |
+| [**gzh-million-layout-skill**](https://github.com/sixwei2025/gzh-million-layout-skill) | 公众号排版 | 汇芯红 `#C8102E` 六套 100% 内联 CSS 骨架 + 零乱码检查 + 配图皮肤 |
+| [**ai-tool-review-wechat-skill**](https://github.com/sixwei2025/ai-tool-review-wechat-skill) | 公众号评测 | AI 工具真跑评测工作流（2.0 全自动压测 + 去碎句语感质检 + 六套骨架装配） |
 | [**hit-title-expert-skill**](https://github.com/sixwei2025/hit-title-expert-skill) | 爆款标题 | 一次直出 10 条 14–22 字高浓缩狠标题（5大公式 × 5类钩子词） |
 | [**auto-tutorial-skill**](https://github.com/sixwei2025/auto-tutorial-skill) | 短视频工程 | 链接/网页/真机截图 → 3:4 封面 + 1.5x 配音 + 红框标注教程视频 |
 | [**talking-head-video-skill**](https://github.com/sixwei2025/talking-head-video-skill) | 短视频工程 | 1080×1920 竖屏真人口播短视频（ASR 错字校对 + 逐字卡拉OK字幕 + 6项QC） |
 | [**3d-map-video-skill**](https://github.com/sixwei2025/3d-map-video-skill) | 短视频工程 | MapLibre 3D 地形 + WarFX 战争特效（粒子行军/点阵兵力/震屏混音） |
 | [**psych-kepu-video-skill**](https://github.com/sixwei2025/psych-kepu-video-skill) | 短视频工程 | Remotion + JSON 驱动的 15–30s 深色扁平动画心理科普短视频 |
 | [**dark-infographic-video-skill**](https://github.com/sixwei2025/dark-infographic-video-skill) | 短视频工程 | 纯 Python + FFmpeg 暗黑流光数据可视化科普片（含 v2 手机外放配乐） |
-| [**local-video-hub**](https://github.com/sixwei2025/local-video-hub) | AI 团队基建 | 视频版本地 Obsidian：多 AI 员工统一交片、去重门闸与四态流转云台 |
+| [**local-video-hub**](https://github.com/sixwei2025/local-video-hub) | AI 团队基建 | 视频版本地 Obsidian：多 AI 员工统一交片、撞题查重与四态流转云台 |
 | [**yuanliuwei-ai-skills**](https://github.com/sixwei2025/yuanliuwei-ai-skills) | 一人公司方法 | PACT 72h 需求验证模型与一人 AI 公司 10 大业务决策模块 |
 | [**book-skill**](https://github.com/sixwei2025/book-skill) | 知识工程 | 上传任意书籍 PDF → 自动提炼方法论生成 `.skill` + 公众号导流文案 |
 | [**huangdi-skill**](https://github.com/sixwei2025/huangdi-skill) | 认知操作系统 | 中国历史八大皇帝（秦始皇/汉武帝/唐太宗等）一手史料认知框架蒸馏 |
