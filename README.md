@@ -69,17 +69,17 @@ https://github.com/sixwei2025/wechat-cover-skill
 同一篇文章、同一张真人照片，通过 `scripts/render_cover_themes.py` 一键直出 6 套高客单价杂志封面：
 
 <p align="center">
-  <img src="assets/showcase/00-cover-layouts-v3.jpg" alt="封面六套总览：午夜墨、纸本墨、牛皮纸、靛蓝瓷、瑞士蓝、汇芯红" width="100%" />
+  <img src="assets/showcase/00-cover-layouts-v4.jpg" alt="六种空间构图封面总览：经典双栏、左人右文、Bento拼贴、居中C位、档案卡黑底、斜切海报" width="100%" />
 </p>
 
-| 主题 ID | 风格名称 | 默认版式（`--layout`） | 底色 / 锚点色 | 最佳适用题材 |
+| 主题 ID | 风格名称 | 空间构图版式（`--layout`） | 底色 / 锚点色 | 最佳适用题材 |
 | :--- | :--- | :--- | :--- | :--- |
-| `midnight` | **午夜墨** | `cinema`（电影宽银幕 + 底部主创铭牌） | `#0B0B0D` / `#D4A04A` 暖金 | 带硬数字的复盘、搞钱算账、深夜深度长文 |
-| `paper` | **纸本墨** | `masthead`（大刊报头 + 人物破框叠压） | `#F1EFEA` / `#C8102E` 汇芯红 | 方法论、核心观点、体系化长文教程 |
-| `kraft` | **牛皮纸** | `archive-card`（档案相框卡片 + IP 签名底栏） | `#EEDFC7` / `#9B4322` 焦糖 | 个人经历、创业踩坑、案例故事复盘 |
-| `indigo` | **靛蓝瓷** | `duotone-split`（60/40 硬切双色对撞） | `#F3F5F8` + `#132A4A` / `#C8102E` | AI 工具实测、产品发布、技术架构拆解 |
-| `swiss` | **瑞士蓝** | `swiss-grid`（`1px` 细线网格 + 半身特写） | `#FAFAF8` / `#002FA7` 克莱因蓝 | 行业报告、工具清单、横评数据表 |
-| `brand` | **汇芯红** | `editorial`（经典杂志双栏 + IP 印章） | `#FAF7F4` / `#C8102E` 品牌红 | 通用主力，与汇芯红正文排版完全呼应 |
+| `brand` | **汇芯红** | `editorial-right`（经典左文右人 + IP 印章） | `#FAF7F4` / `#C8102E` 品牌红 | 通用主力，与汇芯红正文排版完全呼应 |
+| `paper` | **纸本墨** | `portrait-left`（左人右文反转 + 顶通黑条报头） | `#F1EFEA` / `#C8102E` 汇芯红 | 方法论、核心观点、体系化长文教程 |
+| `swiss` | **瑞士蓝** | `bento-grid`（Bento 三格圆角卡片拼贴） | `#EFF1F5` / `#002FA7` 克莱因蓝 | 行业报告、工具清单、横评数据表 |
+| `midnight` | **午夜墨** | `center-hero`（人物正中 C 位 + 左右分列） | `#0B0B0D` / `#D4A04A` 暖金 | 带硬数字的复盘、搞钱算账、深夜深度长文 |
+| `kraft` | **牛皮纸** | `card-black-split`（左米白档案卡 + 右纯黑大字） | `#0E0E10` + `#F3E7D3` / `#C8102E` | 个人经历、创业踩坑、案例故事复盘 |
+| `indigo` | **靛蓝瓷** | `diagonal-cut`（11° 斜切双色海报） | `#F3F5F8` + `#132A4A` / `#C8102E` | AI 工具实测、产品发布、技术架构拆解 |
 
 ### 2.2 经典黑红金 v2b 风格（高冲击力工具实测向）
 
