@@ -30,7 +30,7 @@ python3 skills/公众号封面skill/scripts/render_cover_themes.py --demo --out 
 
 ## 版本记录
 
-当前版本：`v1.0.0` · 2026-11-13
+当前版本：`v1.2.1` · 2026-11-15
 完整变化记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 
